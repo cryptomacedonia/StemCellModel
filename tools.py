@@ -7,7 +7,8 @@ from mesa.time import RandomActivation
 from mesa.datacollection import DataCollector
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
-
+import numpy as np
+from PIL import ImageColor
 
 def bool_with_probability(percent=50):
     return random.randrange(100) < percent
@@ -27,14 +28,17 @@ def remove(self):
         self.model.schedule.remove(self)
         self.grid.remove_agent(self)
 def reproduce(agent, probability):
+        if agent.level == 0 or agent is None: # I am leaf cell.. cant reproduce...
+            return
         if bool_with_probability(probability) == False:
             return
-        if agent.parent_id != "": #only master stem cell can reproduce - change later !!
-            return
+        # if agent.parent_id != "": #only master stem cell can reproduce - change later !!
+        #     return
+        # empty_cells = agent.model.grid.get_empty_neighbors(agent.pos, moore=True,include_center=False, radius = 1)
         neighborhood = agent.model.grid.get_neighborhood(agent.pos, moore=True, include_center=False)
         empty_cells = [cell for cell in neighborhood if agent.model.grid.is_cell_empty(cell)]
-        if len(empty_cells) > 2:
-            child = agent.__class__(unique_id=agent.model.current_id + 1,parent_id = str(agent.unique_id), model = agent.model)
+        if len(empty_cells) > 4:
+            child = agent.__class__(unique_id=agent.model.current_id + 1,parent_id = str(agent.unique_id), model = agent.model,color= color_variant(agent.color,40), level=agent.level - 1)
             agent.model.current_id += 1
             agent.model.grid.place_agent(child, empty_cells[0])
             agent.lastReproduceTime = current_milli_time()
@@ -54,7 +58,7 @@ class AgentModel(Model):
     def __init__(self, width = 100, height = 100, agents = []):
         self.num_agents = 0
         self.agents = []
-        self.grid = MultiGrid(width, height, torus=True)
+        self.grid = MultiGrid(width, height, torus=False)
         self.schedule = RandomActivation(self)
         self.current_id = 0
         self.width = width
@@ -85,12 +89,13 @@ class AgentModel(Model):
             self.current_id += 1
             self.grid.place_agent(agent, pos)
             self.schedule.add(agent)
-    def move_agent_randomly_with_probability(self,agent):
+    def move_agent_randomly_with_probability(self,agent,move_factor = 1):
          if bool_with_probability(agent.mobility) == False:
             return
          x, y = agent.pos
+         move_factor = random.randint(1, 2)
         # generate a random movement direction
-         dx, dy = random.choice([(0, 1), (0, -1), (1, 0), (-1, 0)])
+         dx, dy = random.choice([(0, move_factor), (0, -move_factor), (move_factor, 0), (-move_factor, 0)])
         # calculate the new position of the agent
          new_x = int(x + dx)
          new_y = int(y + dy)
@@ -110,6 +115,8 @@ class AgentModel(Model):
         self.schedule.step()
 
 def get_empty_around_me(agent):
+    if agent is None:
+        return []
     neighborhood = agent.model.grid.get_neighborhood(agent.pos, moore=True, include_center=False)
     empty_cells = [cell for cell in neighborhood if agent.model.grid.is_cell_empty(cell)]
     return empty_cells
@@ -118,7 +125,73 @@ def random_color():
 def get_agents_around_me(agent):
     neighborhood = agent.model.grid.get_neighborhood(agent.pos, moore=True, include_center=False)
     non_empty_cells = [cell for cell in neighborhood if agent.model.grid.is_cell_empty(cell) != True]
-    return non_empty_cells            
+    return non_empty_cells 
+def rgb2hex(r,g,b):
+    return "#{:02x}{:02x}{:02x}".format(int(r*255),int(g*255),int(b*255))
+import matplotlib.colors as colors
+def hex_to_rgb(value):
+    val = value[0].lstrip('#')
+    if val == "":
+        val = value.lstrip('#')
+    try:
+         bytes.fromhex(val)
+       #colors.hex2color(value[0].upper()) 
+    except:
+        print(val)
+    rg = bytes.fromhex(val) 
+    if len(rg) < 3:
+        print(val)
+    return (rg[0]/255,rg[1]/255,rg[2]/255)
+    # tu = ImageColor.getcolor(value[0], "RGB") 
+    # return (tu[0]/255,tu[1]/255,tu[2]/255)
+
+def color_variant(hex_color, brightness_offset=1):
+    """ takes a color like #87c95f and produces a lighter or darker variant """
+    if len(hex_color) != 7:
+        raise Exception("Passed %s into color_variant(), needs to be in #87c95f format." % hex_color)
+    rgb_hex = [hex_color[x:x+2] for x in [1, 3, 5]]
+    new_rgb_int = [int(hex_value, 16) + brightness_offset for hex_value in rgb_hex]
+    new_rgb_int = [min([255, max([0, i])]) for i in new_rgb_int] # make sure new values are between 0 and 255
+    # hex() produces "0x88", we want just "88"
+    return "#{:02x}{:02x}{:02x}".format(new_rgb_int[0],new_rgb_int[1],new_rgb_int[2])
+def adjust_lightness(color, amount=0.1):
+    import matplotlib.colors as mc
+    import colorsys
+    try:
+        c = mc.cnames[color]
+    except:
+        c = color
+    c = hex_to_rgb(c)
+    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
+    rg = colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
+    return rgb2hex(rg[0], rg[1], rg[2])
+# class ExtendedGrid(MultiGrid):
+#     def __init__(self, width, height, torus=False):
+#         super().__init__(width, height, torus)
+#         self.get_cell_list_contents = super().get_cell_list_contents
+    
+#     def get_empty_neighbors(self, pos, moore=True, include_center=True, radius=3):
+#         """
+#         Get all empty neighbors within a certain radius from a position.
+#         """
+#         x, y = pos
+#         empty_neighbors = []
+#         for dx in range(-radius, radius+1):
+#             for dy in range(-radius, radius+1):
+#                 if dx == 0 and dy == 0 and not include_center:
+#                     continue
+#                 if not moore and (abs(dx) + abs(dy)) != 1:
+#                     continue
+#                 if moore and dx == 0 and dy == 0:
+#                     continue
+#                 neighbor_pos = ((x + dx) % self.width, (y + dy) % self.height)
+                
+#                 if neighbor_pos[0] < 0 or neighbor_pos[0] >= self.width or neighbor_pos[1] < 0 or neighbor_pos[1] >= self.height:
+#                     print(f"Neighbor position {neighbor_pos} is outside the bounds of the grid")
+#                     continue
+#                 if not self.get_cell_list_contents((neighbor_pos[0], neighbor_pos[1])):
+#                     empty_neighbors.append((neighbor_pos[0],neighbor_pos[1]))
+#         return empty_neighbors
 def start_simulation(width,height,agents):
     grid = CanvasGrid(agent_portrayal,width, height, 500, 500)
     server = ModularServer(AgentModel, [grid], "Cell Model",
