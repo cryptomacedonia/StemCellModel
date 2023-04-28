@@ -117,8 +117,9 @@ class AgentModel(Model):
         self.schedule.step()
 
 def get_empty_around_me(agent):
-    if agent is None:
+    if agent is None or agent.pos is None:
         return []
+    
     neighborhood = agent.model.grid.get_neighborhood(agent.pos, moore=True, include_center=False)
     empty_cells = [cell for cell in neighborhood if agent.model.grid.is_cell_empty(cell)]
     return empty_cells
@@ -196,6 +197,7 @@ def adjust_lightness(color, amount=0.1):
 #         return empty_neighbors
 def start_simulation(width,height,agents):
     grid = CanvasGrid(agent_portrayal,width, height, 500, 500)
+  
     server = ModularServer(AgentModel, [grid], "Cell Model",
                            {
                             "width": width, 
