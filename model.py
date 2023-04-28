@@ -32,7 +32,7 @@ class KillSignal(Agent):
         
         
 class Cell(Agent):
-    def __init__(self, model = tools.AgentModel(), unique_id = 0, radius = 1.0, color = tools.random_color(), mobility = 50,vitality = 30 , parent_id = "ABC", level = 3 ):
+    def __init__(self, model = tools.AgentModel(), unique_id = 0, radius = 1.0, color = tools.random_color(), mobility = 70,vitality = 20 , parent_id = "ABC", level = 4 ):
         super().__init__(unique_id, model)
         self.radius = radius
         self.parent_id = parent_id
@@ -54,31 +54,31 @@ class Cell(Agent):
         if self.last_full_signal_timestamp != None and tools.current_milli_time() -  self.last_full_signal_timestamp > 4000:
             tools.reproduce(self, probability=100)
         if self.step_count == 10:
-            tools.reproduce(self, probability=100)
+            tools.reproduce(self, probability=self.vitality / 3)
         if self.step_count == 20:
-            tools.reproduce(self, probability=100)
+            tools.reproduce(self, probability=self.vitality / 3)
         if self.step_count == 30:
-            tools.reproduce(self, probability=100)
+            tools.reproduce(self, probability=self.vitality / 3)
         # if self.step_count == 40:
         #     tools.reproduce(self, probability=100)
         #     self.send_signal(probability=100)
             
     def did_i_receive_signal(self):
         for neighbor in self.model.grid.iter_neighbors(self.pos, True):
-               if neighbor.__class__.__name__ == "Signal":
-                   print(neighbor)
+            #    if neighbor.__class__.__name__ == "Signal":
+            #        print(neighbor)
                if neighbor.__class__.__name__ != "Signal" and  neighbor.__class__.__name__ != "KillSignal": #not a signal
                    continue
-               if neighbor.__class__.__name__ == "KillSignal" and neighbor.hash.startswith(str(self.parent_id)) and tools.current_milli_time() - self.last_time_I_received_parent_signal_and_attached_my_signature > 10000 and self.parent_id != "ABC":
+               if neighbor.hash.startswith(str(self.parent_id)) and tools.current_milli_time() - self.last_time_I_received_parent_signal_and_attached_my_signature > 60000 and self.parent_id != "ABC":
                     self.model.schedule.remove(self)
                     self.model.grid.remove_agent(self)
                     continue
                    
-               print("hash:",neighbor.hash)
+              
                if neighbor.hash.startswith(str(self.unique_id)):
 
                      # I sent this signal! # lets check if it FULLy signed
-                    if len(neighbor.hash.split(sep='_')) == 3:
+                    if len(neighbor.hash.split(sep='_')) == self.level:
                         # full signal 
                         self.model.schedule.remove(neighbor)
                         self.model.grid.remove_agent(neighbor)
@@ -87,26 +87,27 @@ class Cell(Agent):
                         # self.color = "Yellow"
                         # self.radius = 1.0
                         self.mobility = self.mobility  = 0
-                        self.vitality = self.vitality + 100
+                        self.vitality = self.vitality + 300
                         self.last_full_signal_timestamp = tools.current_milli_time()
+                        print("full hash:",neighbor.hash)
                     else:
                          #  signal not completed... ignore
                         continue      
                if neighbor.hash.startswith(self.parent_id): # My parent sent this!!
-                   if len(neighbor.hash.split(sep='_')) == 3:
+                   if len(neighbor.hash.split(sep='_')) == self.level:
                         continue
                    else:
                        # i will add my signature to this!!
                        if str(self.unique_id) not in neighbor.hash:
                             neighbor.hash = neighbor.hash + "_" + str(self.unique_id)
                             self.mobility = 0
-                            self.vitality = self.vitality + 70
+                            self.vitality = self.vitality + 200
                             self.last_time_I_received_parent_signal_and_attached_my_signature = tools.current_milli_time()
                             # neighbor.color = tools.random_color()
                             neighbor.vitality = neighbor.vitality + 20
-                            if len(neighbor.hash.split(sep='_')) == 3:
-                                neighbor.vitality = neighbor.vitality + 50
-                            print("ADDED MY HASH:", neighbor.hash)
+                            if len(neighbor.hash.split(sep='_')) == self.level + 1:
+                                neighbor.vitality = neighbor.vitality + 200 
+                            # print("ADDED MY HASH:", neighbor.hash)
     def send_kill_signal(self, probability):
         if self.level == 0:
             return
@@ -132,7 +133,7 @@ class Cell(Agent):
         
 
 #start the simulation
-tools.start_simulation(60,60,[Cell(color="#f54242"),Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526")])
-#tools.start_simulation(20,20,[Cell(color="#f54242")])
+tools.start_simulation(70,70,[Cell(color="#f54242"),Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526")])
+# tools.start_simulation(20,20,[Cell(color="#f54242")])
 
 

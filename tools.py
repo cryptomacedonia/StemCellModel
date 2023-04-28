@@ -35,9 +35,11 @@ def reproduce(agent, probability):
         # if agent.parent_id != "": #only master stem cell can reproduce - change later !!
         #     return
         # empty_cells = agent.model.grid.get_empty_neighbors(agent.pos, moore=True,include_center=False, radius = 1)
-        neighborhood = agent.model.grid.get_neighborhood(agent.pos, moore=True, include_center=False)
-        empty_cells = [cell for cell in neighborhood if agent.model.grid.is_cell_empty(cell)]
-        if len(empty_cells) > 4:
+        empty_cells = []
+        if agent.pos is not None:
+            neighborhood = agent.model.grid.get_neighborhood(agent.pos, moore=True, include_center=False)
+            empty_cells = [cell for cell in neighborhood if agent.model.grid.is_cell_empty(cell)]
+        if empty_cells is not None and len(empty_cells) > 4:
             child = agent.__class__(unique_id=agent.model.current_id + 1,parent_id = str(agent.unique_id), model = agent.model,color= color_variant(agent.color,40), level=agent.level - 1)
             agent.model.current_id += 1
             agent.model.grid.place_agent(child, empty_cells[0])
