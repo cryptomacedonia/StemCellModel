@@ -9,7 +9,39 @@ from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 import numpy as np
 from PIL import ImageColor
-
+clrs = [
+    "#000000",  # Black
+    "#FF0000",  # Red
+    "#00FF00",  # Green
+    "#0000FF",  # Blue
+    "#FFFF00",  # Yellow
+    "#FF00FF",  # Magenta
+    "#00FFFF",  # Cyan
+    "#800000",  # Maroon
+    "#808000",  # Olive
+    "#008000",  # Lime
+    "#800080",  # Purple
+    "#008080",  # Teal
+    "#C0C0C0",  # Silver
+    "#FFA500",  # Orange
+    "#FFC0CB",  # Pink
+    "#FF69B4",  # Hot Pink
+    "#DC143C",  # Crimson
+    "#FFD700",  # Gold
+    "#FFFFE0",  # Light Yellow
+    "#00FF7F",  # Spring Green
+    "#40E0D0",  # Turquoise
+    "#000080",  # Navy
+    "#6B8E23",  # Olive Drab
+    "#2E8B57",  # Sea Green
+    "#BA55D3",  # Medium Orchid
+    "#FF6347",  # Tomato
+    "#FA8072",  # Salmon
+    "#00BFFF",  # Deep Sky Blue
+    "#9400D3",  # Dark Violet
+    "#D2691E",  # Chocolate
+    "#B0E0E6",  # Powder Blue
+]
 def bool_with_probability(percent=50):
     return random.randrange(100) < percent
 def current_milli_time():
@@ -39,8 +71,10 @@ def reproduce(agent, probability):
         if agent.pos is not None:
             neighborhood = agent.model.grid.get_neighborhood(agent.pos, moore=True, include_center=False)
             empty_cells = [cell for cell in neighborhood if agent.model.grid.is_cell_empty(cell)]
-        if empty_cells is not None and len(empty_cells) > 4:
+        if empty_cells is not None and len(empty_cells) > 6:
             child = agent.__class__(unique_id=agent.model.current_id + 1,parent_id = str(agent.unique_id), model = agent.model,color= color_variant(agent.color,40), level=agent.level - 1)
+            if len(clrs) > 0 and child.parent_id == "0":
+                child.color = random.choice(clrs)
             agent.model.current_id += 1
             agent.model.grid.place_agent(child, empty_cells[0])
             agent.lastReproduceTime = current_milli_time()
