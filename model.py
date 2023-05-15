@@ -1,5 +1,6 @@
 from mesa import Agent, Model
 import tools
+import random
 
 signalCountRequired = 3
 class Example(Agent):
@@ -36,7 +37,7 @@ class KillSignal(Agent):
         
         
 class Cell(Agent):
-    def __init__(self, model = tools.AgentModel(), unique_id = 0, radius = 1.0, color = tools.random_color(), mobility = 1900,vitality = 70 , parent_id = "ABC", level = 6 ):
+    def __init__(self, model = tools.AgentModel(), unique_id = 0, radius = 1.0, color = tools.random_color(), mobility = 1900,vitality = 70 , parent_id = "ABC", level = random.randint(3, 9) ):
         super().__init__(unique_id, model)
         self.radius = radius
         self.parent_id = parent_id
@@ -123,7 +124,7 @@ class Cell(Agent):
                             # self.color = "Yellow"
                             # self.radius = 1.0
                             self.mobility = self.mobility  / 5
-                            self.vitality = self.vitality + 300
+                            self.vitality = self.vitality + 1000/(self.level+1)**2
                             self.last_full_signal_timestamp = tools.current_milli_time()
                             print("full hash:",neighbor.hash)
                         else:
@@ -136,8 +137,8 @@ class Cell(Agent):
                         # i will add my signature to this!!
                         if str(self.unique_id) not in neighbor.hash:
                                 neighbor.hash = neighbor.hash + "_" + str(self.unique_id)
-                                self.mobility = self.mobility / 10 
-                                self.vitality = self.vitality + 200
+                                self.mobility = self.mobility / 70
+                                self.vitality = self.vitality + (100/self.level**2)
                                 self.last_time_I_received_parent_signal_and_attached_my_signature = tools.current_milli_time()
                                 # neighbor.color = tools.random_color()
                                 neighbor.vitality = neighbor.vitality + 20
@@ -160,7 +161,7 @@ class Cell(Agent):
             empty_cells = tools.get_empty_around_me(self)
             numberNeeded = 0 if probability == 100 else 8
             if len(empty_cells) > numberNeeded :
-                self.model.add_agent( Signal(unique_id= self.model.current_id + 1 , hash = str(self.unique_id), color=self.color, radius=self.radius / 5, mobility = 10000/(self.level+1)**2, vitality= 50/(self.level+1)**2 ), empty_cells[0])
+                self.model.add_agent( Signal(unique_id= self.model.current_id + 1 , hash = str(self.unique_id), color="#15bce6", radius=self.radius / 5, mobility = 100000/(self.level+1)**2, vitality= 1000/(self.level+1)**2 ), empty_cells[0])
         
         
         
@@ -170,7 +171,8 @@ class Cell(Agent):
         
 
 #start the simulation
-# tools.start_simulation(80,80,[Cell(color="#f54242"),Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526"), Cell(color="#E5FF00"), Cell(color="#FF00EC"), Cell(color="#00FF11")])
-tools.start_simulation(100,100,[Cell(color="#f54242")])
+# tools.start_simulation(50,50,[Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526"), Cell(color="#E5FF00"), Cell(color="#FF00EC"), Cell(color="#00FF11")])
+tools.start_simulation(70,70,[ Cell(color="#BF07F2"),  Cell(color="#1DA526")])
+# tools.start_simulation(100,100,[Cell(color="#f54242")])
 
 
