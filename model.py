@@ -52,7 +52,7 @@ class Cell(Agent):
         
     def step(self):
         self.model.move_agent_randomly_with_probability(self)
-        if tools.current_milli_time() - self.last_time_I_received_parent_signal_and_attached_my_signature > 12000 and str(self.parent_id) != "ABC":
+        if tools.current_milli_time() - self.last_time_I_received_parent_signal_and_attached_my_signature > 20000 and str(self.parent_id) != "ABC":
               self.model.schedule.remove(self)
               self.model.grid.remove_agent(self)
         # tools.reproduce(self, probability=2)
@@ -128,6 +128,7 @@ class Cell(Agent):
                             self.last_full_signal_timestamp = tools.current_milli_time()
                             print("full hash:",neighbor.hash)
                         else:
+                            neighbor.vitality = max(neighbor.vitality *1.1, 200)
                             #  signal not completed... ignore
                             continue      
                 if neighbor.hash.startswith(self.parent_id): # My parent sent this!!
@@ -138,7 +139,7 @@ class Cell(Agent):
                         if str(self.unique_id) not in neighbor.hash:
                                 neighbor.hash = neighbor.hash + "_" + str(self.unique_id)
                                 self.mobility = self.mobility / 70
-                                self.vitality = self.vitality + (100/self.level**2)
+                                self.vitality = self.vitality + (100/(self.level+1)**2)
                                 self.last_time_I_received_parent_signal_and_attached_my_signature = tools.current_milli_time()
                                 # neighbor.color = tools.random_color()
                                 neighbor.vitality = neighbor.vitality + 20
@@ -158,7 +159,8 @@ class Cell(Agent):
         if self.level == 0 or self is None:
             return
         if tools.bool_with_probability(probability):
-            empty_cells = tools.get_empty_around_me(self)
+            # empty_cells = tools.get_empty_around_me(self)
+            empty_cells = tools.get_empty_neighbors(self)
             numberNeeded = 0 if probability == 100 else 8
             if len(empty_cells) > numberNeeded :
                 self.model.add_agent( Signal(unique_id= self.model.current_id + 1 , hash = str(self.unique_id), color="#15bce6", radius=self.radius / 5, mobility = 100000/(self.level+1)**2, vitality= 1000/(self.level+1)**2 ), empty_cells[0])
@@ -171,8 +173,8 @@ class Cell(Agent):
         
 
 #start the simulation
-# tools.start_simulation(50,50,[Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526"), Cell(color="#E5FF00"), Cell(color="#FF00EC"), Cell(color="#00FF11")])
-tools.start_simulation(70,70,[ Cell(color="#BF07F2"),  Cell(color="#1DA526")])
+tools.start_simulation(50,50,[Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526"), Cell(color="#E5FF00"), Cell(color="#FF00EC"), Cell(color="#00FF11")])
+# tools.start_simulation(70,70,[ Cell(color="#BF07F2"),  Cell(color="#1DA526")])
 # tools.start_simulation(100,100,[Cell(color="#f54242")])
 
 

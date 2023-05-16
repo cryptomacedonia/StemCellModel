@@ -48,7 +48,8 @@ def current_milli_time():
     return round(time.time() * 1000)
 def send_signal(self, signal_class):
         neighborhood = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
-        empty_cells = [cell for cell in neighborhood if self.model.grid.is_cell_empty(cell)]
+        # empty_cells = [cell for cell in neighborhood if self.model.grid.is_cell_empty(cell)]
+        empty_cells = get_empty_neighbors(self)
         if len(empty_cells) == 0:
             return
         signal = signal_class(self.model.current_id + 1, empty_cells[0], self.model)
@@ -150,13 +151,6 @@ class AgentModel(Model):
             agent.vitality = agent.vitality - 2
         self.schedule.step()
 
-def get_empty_around_me(agent):
-    if agent is None or agent.pos is None:
-        return []
-    
-    neighborhood = agent.model.grid.get_neighborhood(agent.pos, moore=True, include_center=False)
-    empty_cells = [cell for cell in neighborhood if agent.model.grid.is_cell_empty(cell)]
-    return empty_cells
 def random_color():
     return  ["#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])]
 def get_agents_around_me(agent):
@@ -238,3 +232,23 @@ def start_simulation(width,height,agents):
                             "height": height, "agents":agents})
     server.port = 8521  #
     server.launch()
+def get_empty_neighbors(agent, radius=2):
+    grid = agent.model.grid
+    if agent.pos is None:
+        return []
+    x, y = agent.pos
+
+    empty_neighbors = []
+    for dx in range(-radius, radius + 1):
+        for dy in range(-radius, radius + 1):
+            if (dx, dy) != (0, 0):  # Exclude the central cell
+                neighbor_x = x + dx
+                neighbor_y = y + dy
+
+                # Ensure the neighbor coordinates are within the grid bounds
+                if not grid.out_of_bounds((neighbor_x, neighbor_y)):
+                    cell = grid.get_cell_list_contents([(neighbor_x, neighbor_y)])
+                    if not cell:  # Check if the cell is empty
+                        empty_neighbors.append((neighbor_x, neighbor_y))
+
+    return empty_neighbors
