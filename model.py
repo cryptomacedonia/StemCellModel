@@ -17,7 +17,11 @@ class Signal(Agent):
         self.mobility = mobility
         self.vitality = vitality
         self.step_count = 0
-    def step(self):           
+    def step(self):
+        if self.vitality == 0:
+            self.model.schedule.remove(self)
+            self.model.grid.remove_agent(self)
+            return
         self.model.move_agent_randomly_with_probability(self, move_factor = 3)
         self.step_count = self.step_count + 1
         # if self.step_count == 10:
@@ -37,7 +41,7 @@ class KillSignal(Agent):
         
         
 class Cell(Agent):
-    def __init__(self, model = tools.AgentModel(), unique_id = 0, radius = 1.0, color = tools.random_color(), mobility = 1900,vitality = 50 , parent_id = "ABC", level = random.randint(3, 3) ):
+    def __init__(self, model = tools.AgentModel(), unique_id = 0, radius = 1.0, color = tools.random_color(), mobility = 1900,vitality = 50 , parent_id = "ABC", level = random.randint(3, 6) ):
         super().__init__(unique_id, model)
         self.radius = radius
         self.parent_id = parent_id
@@ -101,7 +105,7 @@ class Cell(Agent):
                   
     def did_i_receive_signal(self):
         if self.pos is not None:
-            neighbors = tools.get_neighbors(self, empty=False)
+            neighbors = tools.get_neighbors(self, empty=False, radius= int(20/(self.level+1**2)))
             # for neighbor in self.model.grid.iter_neighbors(self.pos, True):
                 #    if neighbor.__class__.__name__ == "Signal":
                 #        print(neighbor)
@@ -178,8 +182,8 @@ class Cell(Agent):
         
 
 #start the simulation
-tools.start_simulation(50,50,[Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526"), Cell(color="#E5FF00"), Cell(color="#FF00EC"), Cell(color="#00FF11")])
+# tools.start_simulation(50,50,[Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526"), Cell(color="#E5FF00"), Cell(color="#FF00EC"), Cell(color="#00FF11")])
 # tools.start_simulation(70,70,[ Cell(color="#BF07F2"),  Cell(color="#1DA526")])
-# tools.start_simulation(60,60,[Cell(color="#f54242")])
+tools.start_simulation(60,60,[Cell(color="#f54242")])
 
 

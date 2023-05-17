@@ -232,7 +232,7 @@ def start_simulation(width,height,agents):
                             "height": height, "agents":agents})
     server.port = 8521  #
     server.launch()
-def get_neighbors(agent, empty=True, radius=6):
+def get_neighbors(agent, empty=True, radius=4):
     grid = agent.model.grid
     if agent.pos is None:
         return []
