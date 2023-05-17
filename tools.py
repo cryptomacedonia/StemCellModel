@@ -49,7 +49,7 @@ def current_milli_time():
 def send_signal(self, signal_class):
         neighborhood = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
         # empty_cells = [cell for cell in neighborhood if self.model.grid.is_cell_empty(cell)]
-        empty_cells = get_empty_neighbors(self)
+        empty_cells = get_neighbors(self, empty=True)
         if len(empty_cells) == 0:
             return
         signal = signal_class(self.model.current_id + 1, empty_cells[0], self.model)
@@ -130,7 +130,7 @@ class AgentModel(Model):
          if bool_with_probability(agent.mobility) == False:
             return
          x, y = agent.pos
-         move_factor = random.randint(1, 2)
+         move_factor = 2 if type(agent).__name__ == "Cell"  else random.randint(1, 13)
         # generate a random movement direction
          dx, dy = random.choice([(0, move_factor), (0, -move_factor), (move_factor, 0), (-move_factor, 0)])
         # calculate the new position of the agent
@@ -232,7 +232,7 @@ def start_simulation(width,height,agents):
                             "height": height, "agents":agents})
     server.port = 8521  #
     server.launch()
-def get_empty_neighbors(agent, radius=2):
+def get_neighbors(agent, empty=True, radius=6):
     grid = agent.model.grid
     if agent.pos is None:
         return []
@@ -248,7 +248,10 @@ def get_empty_neighbors(agent, radius=2):
                 # Ensure the neighbor coordinates are within the grid bounds
                 if not grid.out_of_bounds((neighbor_x, neighbor_y)):
                     cell = grid.get_cell_list_contents([(neighbor_x, neighbor_y)])
-                    if not cell:  # Check if the cell is empty
+                    if not cell and empty is True:  # Check if the cell is empty
                         empty_neighbors.append((neighbor_x, neighbor_y))
+                    else :
+                        if empty is False and cell:
+                            empty_neighbors.append(cell[0])
 
     return empty_neighbors
