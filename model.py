@@ -18,7 +18,7 @@ class Signal(Agent):
         self.vitality = vitality
         self.step_count = 0
     def step(self):
-        if self.vitality == 0:
+        if self.vitality <= 0:
             self.model.schedule.remove(self)
             self.model.grid.remove_agent(self)
             return
@@ -50,20 +50,25 @@ class Cell(Agent):
         
         self.step_count = 0
         self.level = level
-        self.vitality = vitality  if self.parent_id != "ABC" else 100000
+        self.vitality = 400 / (self.level * 2 + 1)  if self.parent_id != "ABC" else 100000
         self.last_full_signal_timestamp = tools.current_milli_time()
         self.last_time_I_received_parent_signal_and_attached_my_signature = tools.current_milli_time()
         
     def step(self):
+        if self.vitality <= 0:
+            self.model.schedule.remove(self)
+            self.model.grid.remove_agent(self)
+            return
         self.model.move_agent_randomly_with_probability(self)
-        if tools.current_milli_time() - self.last_time_I_received_parent_signal_and_attached_my_signature > 20000 and str(self.parent_id) != "ABC":
+        if tools.current_milli_time() - self.last_time_I_received_parent_signal_and_attached_my_signature > (10000 / (self.level+1)) and str(self.parent_id) != "ABC":
               self.model.schedule.remove(self)
               self.model.grid.remove_agent(self)
         # tools.reproduce(self, probability=2)
         self.did_i_receive_signal()
         self.send_signal(probability=((self.level+1) ** 3)/50)
         self.step_count = self.step_count + 1
-        if self.last_full_signal_timestamp != None and tools.current_milli_time() -  self.last_full_signal_timestamp > 8000:
+        if self.last_full_signal_timestamp != None and tools.current_milli_time() -  self.last_full_signal_timestamp > (5000 / (self.level+1)):
+            tools.reproduce(self, probability=100)
             tools.reproduce(self, probability=100)
         if self.step_count == 10:
             tools.reproduce(self, probability=self.vitality / 3)
@@ -137,7 +142,7 @@ class Cell(Agent):
                             neighbor.vitality = 0
                             print("full hash:",neighbor.hash)
                         else:
-                            neighbor.vitality = max(neighbor.vitality *1.5, 200)
+                            # neighbor.vitality = max(neighbor.vitality *1.5, 200)
                             #  signal not completed... ignore
                             continue      
                 if neighbor.hash.startswith(self.parent_id): # My parent sent this!!
@@ -151,7 +156,7 @@ class Cell(Agent):
                                 self.vitality = self.vitality + (100/(self.level+1)**2)
                                 self.last_time_I_received_parent_signal_and_attached_my_signature = tools.current_milli_time()
                                 # neighbor.color = tools.random_color()
-                                neighbor.vitality = neighbor.vitality + 50
+                                neighbor.vitality = neighbor.vitality + 100
                                 if len(neighbor.hash.split(sep='_')) == signalCountRequired:
                                     neighbor.vitality = neighbor.vitality + 100 
                                 # print("ADDED MY HASH:", neighbor.hash)
