@@ -48,7 +48,6 @@ def current_milli_time():
     return round(time.time() * 1000)
 def send_signal(self, signal_class):
         neighborhood = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
-        # empty_cells = [cell for cell in neighborhood if self.model.grid.is_cell_empty(cell)]
         empty_cells = get_neighbors(self, empty=True)
         if len(empty_cells) == 0:
             return
@@ -65,9 +64,6 @@ def reproduce(agent, probability):
             return
         if bool_with_probability(probability) == False:
             return
-        # if agent.parent_id != "": #only master stem cell can reproduce - change later !!
-        #     return
-        # empty_cells = agent.model.grid.get_empty_neighbors(agent.pos, moore=True,include_center=False, radius = 1)
         empty_cells = []
         if agent.pos is not None:
             neighborhood = agent.model.grid.get_neighborhood(agent.pos, moore=True, include_center=False)
@@ -90,7 +86,6 @@ def agent_portrayal(agent):
          "Color": agent.color,
         "Layer": 0,
     }
-
 class AgentModel(Model):
     def __init__(self, width = 100, height = 100, agents = []):
         self.num_agents = 0
@@ -183,7 +178,6 @@ def color_variant(hex_color, brightness_offset=1):
     rgb_hex = [hex_color[x:x+2] for x in [1, 3, 5]]
     new_rgb_int = [int(hex_value, 16) + brightness_offset for hex_value in rgb_hex]
     new_rgb_int = [min([255, max([0, i])]) for i in new_rgb_int] # make sure new values are between 0 and 255
-    # hex() produces "0x88", we want just "88"
     return "#{:02x}{:02x}{:02x}".format(new_rgb_int[0],new_rgb_int[1],new_rgb_int[2])
 def adjust_lightness(color, amount=0.1):
     import matplotlib.colors as mc
@@ -196,33 +190,6 @@ def adjust_lightness(color, amount=0.1):
     c = colorsys.rgb_to_hls(*mc.to_rgb(c))
     rg = colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
     return rgb2hex(rg[0], rg[1], rg[2])
-# class ExtendedGrid(MultiGrid):
-#     def __init__(self, width, height, torus=False):
-#         super().__init__(width, height, torus)
-#         self.get_cell_list_contents = super().get_cell_list_contents
-    
-#     def get_empty_neighbors(self, pos, moore=True, include_center=True, radius=3):
-#         """
-#         Get all empty neighbors within a certain radius from a position.
-#         """
-#         x, y = pos
-#         empty_neighbors = []
-#         for dx in range(-radius, radius+1):
-#             for dy in range(-radius, radius+1):
-#                 if dx == 0 and dy == 0 and not include_center:
-#                     continue
-#                 if not moore and (abs(dx) + abs(dy)) != 1:
-#                     continue
-#                 if moore and dx == 0 and dy == 0:
-#                     continue
-#                 neighbor_pos = ((x + dx) % self.width, (y + dy) % self.height)
-                
-#                 if neighbor_pos[0] < 0 or neighbor_pos[0] >= self.width or neighbor_pos[1] < 0 or neighbor_pos[1] >= self.height:
-#                     print(f"Neighbor position {neighbor_pos} is outside the bounds of the grid")
-#                     continue
-#                 if not self.get_cell_list_contents((neighbor_pos[0], neighbor_pos[1])):
-#                     empty_neighbors.append((neighbor_pos[0],neighbor_pos[1]))
-#         return empty_neighbors
 def start_simulation(width,height,agents):
     grid = CanvasGrid(agent_portrayal,width, height, 500, 500)
   
@@ -237,7 +204,6 @@ def get_neighbors(agent, empty=True, radius=4):
     if agent.pos is None:
         return []
     x, y = agent.pos
-
     empty_neighbors = []
     for dx in range(-radius, radius + 1):
         for dy in range(-radius, radius + 1):
@@ -253,5 +219,4 @@ def get_neighbors(agent, empty=True, radius=4):
                     else :
                         if empty is False and cell:
                             empty_neighbors.append(cell[0])
-
     return empty_neighbors
