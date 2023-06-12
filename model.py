@@ -21,7 +21,7 @@ class Signal(Agent):
         self.model.move_agent_randomly_with_probability(self, move_factor = 3)
         self.step_count = self.step_count + 1 
 class Cell(Agent):
-    def __init__(self, model = tools.AgentModel(), unique_id = 0, radius = 1.0, color = tools.random_color(), mobility = 1900,vitality = 50 , parent_id = "ABC", level = random.randint(3, 6) ):
+    def __init__(self, model = tools.AgentModel(), unique_id = 0, radius = 1.0, color = tools.random_color(), mobility = 1900,vitality = 150 , parent_id = "ABC", level = random.randint(2, 9), reproduceProbability = 1 ):
         super().__init__(unique_id, model)
         self.radius = radius
         self.parent_id = parent_id
@@ -35,6 +35,8 @@ class Cell(Agent):
         self.last_time_I_received_parent_signal_and_attached_my_signature = tools.current_milli_time()
         
     def step(self):
+        # if tools.remove_agent_randomly_with_probability(self, probability = 1) == True:
+        #     return
         if self.vitality <= 0:
             self.model.schedule.remove(self)
             self.model.grid.remove_agent(self)
@@ -46,7 +48,7 @@ class Cell(Agent):
         self.did_i_receive_signal()
         self.send_signal(probability=((self.level+1) ** 3)/50)
         self.step_count = self.step_count + 1
-        if self.last_full_signal_timestamp != None and tools.current_milli_time() -  self.last_full_signal_timestamp > (5000 / (self.level+1)):
+        if self.last_full_signal_timestamp != None and tools.current_milli_time() -  self.last_full_signal_timestamp > (12000 / (self.level+1)):
             tools.reproduce(self, probability=100)
             tools.reproduce(self, probability=100)
         if self.step_count == 10:
@@ -57,11 +59,11 @@ class Cell(Agent):
            
     def did_i_receive_signal(self):
         if self.pos is not None:
-            neighbors = tools.get_neighbors(self, empty=False, radius= int(20/(self.level+1**2)))
+            neighbors = tools.get_neighbors(self, empty=False, radius= int(20/((self.level+1)**2)))
             for neighbor in neighbors:
                 if neighbor.__class__.__name__ != "Signal" and  neighbor.__class__.__name__ != "KillSignal": #not a signal
                     continue
-                if neighbor.hash.startswith(str(self.parent_id)) and tools.current_milli_time() - self.last_time_I_received_parent_signal_and_attached_my_signature > 12000 and self.parent_id != "ABC":
+                if neighbor.hash.startswith(str(self.parent_id)) and tools.current_milli_time() - self.last_time_I_received_parent_signal_and_attached_my_signature > 15000 and self.parent_id != "ABC":
                     try:
                         self.model.schedule.remove(self)
                         self.model.grid.remove_agent(self)
@@ -78,7 +80,7 @@ class Cell(Agent):
                             self.model.grid.remove_agent(neighbor)
                             self.send_signal(probability=100)
                             self.mobility = self.mobility  / 100
-                            self.vitality = self.vitality + 1000/(self.level+1)**2
+                            self.vitality = self.vitality + min(100,1000/(self.level+1)**2)
                             self.last_full_signal_timestamp = tools.current_milli_time()
                             neighbor.vitality = 0
                             print("full hash:",neighbor.hash)
@@ -112,8 +114,8 @@ class Cell(Agent):
    
 
 #start the simulation
-# tools.start_simulation(50,50,[Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526"), Cell(color="#E5FF00"), Cell(color="#FF00EC"), Cell(color="#00FF11")])
+# tools.start_simulation(100,100,[Cell(color="#15bce6"), Cell(color="#BF07F2"),  Cell(color="#1DA526"), Cell(color="#E5FF00"), Cell(color="#FF00EC"), Cell(color="#00FF11")])
 # tools.start_simulation(70,70,[ Cell(color="#BF07F2"),  Cell(color="#1DA526")])
-tools.start_simulation(60,60,[Cell(color="#f54242")])
+tools.start_simulation(100,100,[Cell(color="#f54242")])
 
 

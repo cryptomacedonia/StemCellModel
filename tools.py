@@ -121,6 +121,7 @@ class AgentModel(Model):
             self.current_id += 1
             self.grid.place_agent(agent, pos)
             self.schedule.add(agent)
+
     def move_agent_randomly_with_probability(self,agent,move_factor = 1):
          if bool_with_probability(agent.mobility) == False:
             return
@@ -220,3 +221,11 @@ def get_neighbors(agent, empty=True, radius=4):
                         if empty is False and cell:
                             empty_neighbors.append(cell[0])
     return empty_neighbors
+
+def remove_agent_randomly_with_probability(agent, probability = 1):
+    return False
+    # if bool_with_probability(probability) == False:
+    #     return False
+    # agent.model.schedule.remove(agent)
+    # agent.model.grid.remove_agent(agent)
+    # return True
